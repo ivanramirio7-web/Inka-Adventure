@@ -1,11 +1,9 @@
 /**
  * CONFIGURACIÓN GLOBAL
- * El ID corresponde a la hoja "Base de datos" que compartiste.
  */
-const SPREADSHEET_ID = '1HWd3oUPHwgGzcCMFgi5OWma9c5OJNWAcE9gxHPOOjBU';
+const SPREADSHEET_ID = '1MthALuT9n2HiFm-UhxE9V420GvztS7MF9Ao2Z9is2h0';
 const SHEET_NAME = 'Reservas';
 
-// Estructura de columnas para la base de datos
 const COLUMNS = [
   'Timestamp', 
   'ID Reserva', 
@@ -17,10 +15,6 @@ const COLUMNS = [
   'Condiciones de Salud'
 ];
 
-/**
- * Función principal para servir la interfaz web.
- * Se ejecuta al abrir la URL de la aplicación.
- */
 function doGet(e) {
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('Inka Adventure Agency | Panel de Reservas')
@@ -28,16 +22,11 @@ function doGet(e) {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-/**
- * Registra una nueva reserva en la hoja de Google Sheets.
- * @param {Object} data - Datos enviados desde el formulario HTML.
- */
 function registrarReserva(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     let sheet = ss.getSheetByName(SHEET_NAME);
 
-    // Si la hoja no existe, la crea con encabezados y formato
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
       sheet.appendRow(COLUMNS);
@@ -50,12 +39,10 @@ function registrarReserva(data) {
       sheet.setFrozenRows(1);
     }
 
-    // Generar un ID de reserva aleatorio (Ej: CJ-123456)
     const reservationId = 'CJ-' + Math.floor(100000 + Math.random() * 900000);
 
-    // Preparar la fila con los datos recibidos
     const nuevaFila = [
-      new Date(), // Fecha y hora del registro
+      new Date(), 
       reservationId,
       data.tour,
       data.fecha,
@@ -65,15 +52,8 @@ function registrarReserva(data) {
       data.salud || 'Ninguna'
     ];
 
-    // Insertar los datos
     sheet.appendRow(nuevaFila);
-    
-    // Autoajustar el ancho de las columnas
     sheet.autoResizeColumns(1, COLUMNS.length);
-
-    // (Opcional) Enviar correo al administrador/guía
-    // Para activarlo, cambia el correo en la función notificarGuia y quita las "//" abajo:
-    // notificarGuia(data, reservationId);
 
     return {
       success: true,
@@ -90,48 +70,39 @@ function registrarReserva(data) {
   }
 }
 
-/**
- * Obtiene la lista de pasajeros desde la hoja para el panel del guía.
- * @param {string} tourFilter - Nombre del tour para filtrar.
- * @param {string} dateFilter - Fecha para filtrar (formato YYYY-MM-DD).
- */
-function obtenerPasajeros(tourFilter, dateFilter) {
+function obtenerPasajeros() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME);
 
-    // Si la hoja está vacía o no tiene datos
-    if (!sheet || sheet.getLastRow() <= 1) {
-      return [];
-    }
+    if (!sheet) return [];
 
-    // Obtener todos los valores ignorando la fila de encabezados
-    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, COLUMNS.length).getValues();
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return [];
+
+    // Forzamos la lectura de exactamente 8 columnas (de la A a la H) para evitar desajustes por celdas vacías
+    const values = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
     const passengers = [];
 
     values.forEach(row => {
-      // Normalizar la fecha de la celda para poder compararla con el filtro
-      let fechaCelda = row[3]; 
+      // Manejo seguro de la fecha
+      let fechaCelda = row[3] !== undefined ? row[3] : ''; 
       if (fechaCelda instanceof Date) {
         fechaCelda = Utilities.formatDate(fechaCelda, Session.getScriptTimeZone(), "yyyy-MM-dd");
+      } else {
+        fechaCelda = String(fechaCelda).trim();
       }
 
       const passenger = {
-        timestamp: row[0],
-        id:        row[1],
-        tour:      row[2],
+        id:        String(row[1] || '').trim(),
+        tour:      String(row[2] || '').trim(),
         fecha:     fechaCelda,
-        nombre:    row[4],
-        email:     row[5],
-        telefono:  row[6],
-        salud:     row[7]
+        nombre:    String(row[4] || '').trim(),
+        salud:     String(row[7] || 'Ninguna').trim()
       };
 
-      // Lógica de filtros
-      let matchTour = (!tourFilter || tourFilter === 'Todos los Tours' || passenger.tour === tourFilter);
-      let matchDate = (!dateFilter || dateFilter === '' || passenger.fecha === dateFilter);
-
-      if (matchTour && matchDate && passenger.nombre) {
+      // Si hay un ID de reserva válido, agregamos al pasajero a la lista
+      if (passenger.id !== '') {
         passengers.push(passenger);
       }
     });
@@ -140,36 +111,6 @@ function obtenerPasajeros(tourFilter, dateFilter) {
 
   } catch (err) {
     console.error('Error en obtenerPasajeros:', err.toString());
-    throw new Error('No se pudo acceder a la lista de pasajeros.');
-  }
-}
-
-/**
- * Envía una notificación por correo electrónico.
- */
-function notificarGuia(data, reservationId) {
-  const EMAIL_DESTINO = 'tu-correo@ejemplo.com'; // <--- CAMBIA ESTO POR TU EMAIL
-  const asunto = `Nueva Reserva: ${reservationId} [${data.tour}]`;
-  
-  const cuerpo = `
-    Se ha registrado una nueva aventura:
-    -----------------------------------
-    ID Reserva: ${reservationId}
-    Tour: ${data.tour}
-    Fecha de Viaje: ${data.fecha}
-    
-    DATOS DEL PASAJERO:
-    Nombre: ${data.nombre}
-    Email: ${data.email}
-    Teléfono: ${data.telefono}
-    Condiciones de Salud: ${data.salud}
-    -----------------------------------
-    Registro automático de Inka Adventure Agency.
-  `;
-
-  try {
-    MailApp.sendEmail(EMAIL_DESTINO, asunto, cuerpo);
-  } catch (e) {
-    console.warn('No se pudo enviar el correo: ' + e.message);
+    throw new Error('No se pudo acceder a la lista: ' + err.message);
   }
 }
