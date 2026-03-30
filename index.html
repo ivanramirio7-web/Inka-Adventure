@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inka Adventure Agency | Seguridad y Aventura</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#904816",
+          "secondary": "#366936",
+          "background": "#fef9f1",
+          "on-surface": "#1d1c17",
+          "tertiary": "#735c00",
+        },
+        fontFamily: {
+          "headline": ["Plus Jakarta Sans"],
+          "body": ["Inter"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #904816; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; padding: 1rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.3s ease; }
+  .toast-success { background: #b7f1b0; color: #002204; }
+  .toast-error { background: #ffdad6; color: #93000a; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body">
+
+<div id="toast" class="toast hidden"></div>
+
+<header class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-sm">
+  <nav class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto font-headline">
+    <div class="text-xl font-bold flex items-center gap-3">
+      <span class="text-on-surface">Inka</span><span class="text-primary">Adventure</span>
+    </div>
+    <div class="hidden md:flex gap-8">
+      <a class="hover:text-primary transition-colors" href="#">Inicio</a>
+      <a class="hover:text-primary transition-colors" href="#tours">Tours</a>
+      <a class="hover:text-primary transition-colors" href="#mi-reserva">Reservar</a>
+      <a class="hover:text-primary transition-colors" href="#guia">Panel Guía</a>
+    </div>
+  </nav>
+</header>
+
+<main class="pt-20">
+  <section class="relative h-[600px] flex items-center overflow-hidden bg-zinc-900">
+    <img class="absolute inset-0 w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=1600&q=80" alt="Machu Picchu">
+    <div class="relative z-10 max-w-7xl mx-auto px-8">
+      <h1 class="text-6xl font-headline font-extrabold text-white leading-tight">Teje Tu Propio <br><span class="text-orange-400 italic">Camino.</span></h1>
+      <p class="text-white/80 max-w-lg mt-4">Experiencias auténticas en el corazón de los Andes.</p>
+    </div>
+  </section>
+
+  <section id="tours" class="py-20 max-w-7xl mx-auto px-8">
+    <h2 class="text-4xl font-headline font-bold mb-10 text-center">Nuestras Rutas</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white p-6 rounded-2xl shadow-lg border border-zinc-100">
+        <h3 class="text-xl font-bold mb-2">Camino Inca Clásico</h3>
+        <button onclick="selectTour('Camino Inca Clásico')" class="w-full py-2 bg-primary text-white rounded-lg font-bold hover:opacity-90 transition-all">Seleccionar</button>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow-lg border border-zinc-100">
+        <h3 class="text-xl font-bold mb-2">Salkantay Trek</h3>
+        <button onclick="selectTour('Salkantay Trek')" class="w-full py-2 bg-primary text-white rounded-lg font-bold hover:opacity-90 transition-all">Seleccionar</button>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow-lg border border-zinc-100">
+        <h3 class="text-xl font-bold mb-2">Valle Sagrado Premium</h3>
+        <button onclick="selectTour('Valle Sagrado Premium')" class="w-full py-2 bg-primary text-white rounded-lg font-bold hover:opacity-90 transition-all">Seleccionar</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="mi-reserva" class="py-20 bg-zinc-50 px-8">
+    <div class="max-w-3xl mx-auto bg-white p-10 rounded-3xl shadow-xl">
+      <form id="booking-form" class="space-y-6">
+        <h2 class="text-3xl font-headline font-bold text-center">Registro de Viaje</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="text" id="selected-tour-input" placeholder="Tour Seleccionado" readonly class="bg-zinc-100 border-none rounded-xl p-4 w-full font-bold text-primary">
+          <input type="date" id="booking-date" required class="bg-zinc-100 border-none rounded-xl p-4 w-full">
+          <input type="text" id="booking-name" placeholder="Tu Nombre Completo" required class="bg-zinc-100 border-none rounded-xl p-4 w-full">
+          <input type="email" id="booking-email" placeholder="Correo Electrónico" required class="bg-zinc-100 border-none rounded-xl p-4 w-full">
+          <input type="tel" id="booking-phone" placeholder="Teléfono" required class="bg-zinc-100 border-none rounded-xl p-4 w-full md:col-span-2">
+        </div>
+        <div>
+          <label class="block mb-2 font-bold text-sm">Condiciones de Salud</label>
+          <input type="text" id="health-others" placeholder="Alergias, altura, etc." class="bg-zinc-100 border-none rounded-xl p-4 w-full">
+        </div>
+        <button type="submit" id="submit-btn" class="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
+          <span id="submit-text">Registrar Reserva</span>
+          <span id="submit-spinner" class="spinner hidden"></span>
+        </button>
+      </form>
+
+      <div id="confirmation-view" class="hidden text-center space-y-4">
+        <div class="text-5xl">✅</div>
+        <h3 class="text-2xl font-bold">¡Reserva Exitosa!</h3>
+        <p>Tu código es: <span id="res-id" class="text-primary font-bold"></span></p>
+        <button onclick="resetForm()" class="px-6 py-2 bg-zinc-800 text-white rounded-lg">Nueva Reserva</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="guia" class="py-20 max-w-7xl mx-auto px-8">
+    <div class="bg-zinc-800 text-white p-8 rounded-3xl">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Panel de Guía</h2>
+        <button onclick="loadPassengerList()" id="load-btn" class="bg-secondary px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+          Actualizar Lista <span id="load-spinner" class="spinner hidden" style="width:16px;height:16px;border-top-color:white"></span>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-zinc-700 text-sm text-zinc-400">
+              <th class="p-3">Pasajero</th>
+              <th class="p-3">Tour</th>
+              <th class="p-3">Fecha</th>
+              <th class="p-3">Salud</th>
+            </tr>
+          </thead>
+          <tbody id="passenger-table-body" class="text-sm">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  function selectTour(name) {
+    document.getElementById('selected-tour-input').value = name;
+    document.getElementById('mi-reserva').scrollIntoView({behavior: 'smooth'});
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type}`;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 3000);
+  }
+
+  // --- SUBMIT FORM ---
+  document.getElementById('booking-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const tour = document.getElementById('selected-tour-input').value;
+    
+    if(!tour) return showToast('Selecciona un tour primero', 'error');
+
+    document.getElementById('submit-text').classList.add('hidden');
+    document.getElementById('submit-spinner').classList.remove('hidden');
+    btn.disabled = true;
+
+    const data = {
+      tour: tour,
+      fecha: document.getElementById('booking-date').value,
+      nombre: document.getElementById('booking-name').value,
+      email: document.getElementById('booking-email').value,
+      telefono: document.getElementById('booking-phone').value,
+      salud: document.getElementById('health-others').value
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if(res.success) {
+          document.getElementById('res-id').textContent = res.reservationId;
+          document.getElementById('booking-form').classList.add('hidden');
+          document.getElementById('confirmation-view').classList.remove('hidden');
+          showToast('¡Registro completado!', 'success');
+        }
+        resetButton();
+      })
+      .withFailureHandler(function() {
+        showToast('Error de conexión', 'error');
+        resetButton();
+      })
+      .registrarReserva(data);
+  });
+
+  function resetButton() {
+    document.getElementById('submit-text').classList.remove('hidden');
+    document.getElementById('submit-spinner').classList.add('hidden');
+    document.getElementById('submit-btn').disabled = false;
+  }
+
+  function resetForm() {
+    document.getElementById('booking-form').reset();
+    document.getElementById('booking-form').classList.remove('hidden');
+    document.getElementById('confirmation-view').classList.add('hidden');
+  }
+
+  // --- CARGAR LISTA ---
+  function loadPassengerList() {
+    document.getElementById('load-spinner').classList.remove('hidden');
+    google.script.run
+      .withSuccessHandler(function(list) {
+        const body = document.getElementById('passenger-table-body');
+        body.innerHTML = list.length ? '' : '<tr><td colspan="4" class="p-4 text-center">No hay registros</td></tr>';
+        list.forEach(p => {
+          body.innerHTML += `
+            <tr class="border-b border-zinc-700">
+              <td class="p-3">${p.nombre}</td>
+              <td class="p-3 text-orange-400">${p.tour}</td>
+              <td class="p-3">${p.fecha}</td>
+              <td class="p-3 text-xs text-red-300">${p.salud}</td>
+            </tr>`;
+        });
+        document.getElementById('load-spinner').classList.add('hidden');
+      })
+      .obtenerPasajeros();
+  }
+</script>
+</body>
+</html>
