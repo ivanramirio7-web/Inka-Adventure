@@ -114,7 +114,7 @@
     <div class="bg-zinc-800 text-white p-8 rounded-3xl">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold">Panel de Guía</h2>
-        <button onclick="loadPassengerList()" id="load-btn" class="bg-secondary px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+        <button onclick="loadPassengerList()" id="load-btn" class="bg-secondary px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 transition-colors">
           Actualizar Lista <span id="load-spinner" class="spinner hidden" style="width:16px;height:16px;border-top-color:white"></span>
         </button>
       </div>
@@ -129,7 +129,8 @@
             </tr>
           </thead>
           <tbody id="passenger-table-body" class="text-sm">
-            </tbody>
+            <tr><td colspan="4" class="p-4 text-center text-zinc-500">Haz clic en "Actualizar Lista" para cargar los datos.</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -145,7 +146,7 @@
   function showToast(msg, type) {
     const t = document.getElementById('toast');
     t.textContent = msg;
-    t.className = `toast toast-${type}`;
+    t.className = toast toast-${type};
     t.classList.remove('hidden');
     setTimeout(() => t.classList.add('hidden'), 3000);
   }
@@ -173,15 +174,18 @@
 
     google.script.run
       .withSuccessHandler(function(res) {
-        if(res.success) {
+        if(res && res.success) {
           document.getElementById('res-id').textContent = res.reservationId;
           document.getElementById('booking-form').classList.add('hidden');
           document.getElementById('confirmation-view').classList.remove('hidden');
           showToast('¡Registro completado!', 'success');
+        } else {
+          showToast('Error al guardar la reserva', 'error');
         }
         resetButton();
       })
-      .withFailureHandler(function() {
+      .withFailureHandler(function(error) {
+        console.error(error);
         showToast('Error de conexión', 'error');
         resetButton();
       })
@@ -203,22 +207,33 @@
   // --- CARGAR LISTA ---
   function loadPassengerList() {
     document.getElementById('load-spinner').classList.remove('hidden');
+    
     google.script.run
       .withSuccessHandler(function(list) {
         const body = document.getElementById('passenger-table-body');
-        body.innerHTML = list.length ? '' : '<tr><td colspan="4" class="p-4 text-center">No hay registros</td></tr>';
-        list.forEach(p => {
-          body.innerHTML += `
-            <tr class="border-b border-zinc-700">
-              <td class="p-3">${p.nombre}</td>
-              <td class="p-3 text-orange-400">${p.tour}</td>
-              <td class="p-3">${p.fecha}</td>
-              <td class="p-3 text-xs text-red-300">${p.salud}</td>
-            </tr>`;
-        });
+        body.innerHTML = ''; // Limpiar tabla
+        
+        if (!list || list.length === 0) {
+          body.innerHTML = '<tr><td colspan="4" class="p-4 text-center">No hay registros aún en la base de datos</td></tr>';
+        } else {
+          list.forEach(p => {
+            body.innerHTML += `
+              <tr class="border-b border-zinc-700 hover:bg-zinc-700/50 transition-colors">
+                <td class="p-3">${p.nombre}</td>
+                <td class="p-3 text-orange-400 font-medium">${p.tour}</td>
+                <td class="p-3">${p.fecha}</td>
+                <td class="p-3 text-xs text-red-300">${p.salud}</td>
+              </tr>`;
+          });
+        }
         document.getElementById('load-spinner').classList.add('hidden');
       })
-      .obtenerPasajeros();
+      .withFailureHandler(function(error) {
+        console.error("Error al cargar datos:", error);
+        document.getElementById('load-spinner').classList.add('hidden');
+        showToast('Error al conectar con la base de datos', 'error');
+      })
+      .obtenerPasajeros(null, null);
   }
 </script>
 </body>
